@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+*.exe
+
+# Conda env
+.env/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Project temp / outputs
+output/
+outputs/
+*.nii.gz
+*.nii
+run_log.txt
+
+# Data directories (DO NOT UPLOAD — patient data)
+吸气/
+呼气/
+*.dcm
+DICOM/

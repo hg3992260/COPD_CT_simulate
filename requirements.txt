@@ -1,0 +1,11 @@
+# Core GUI
+PySide6>=6.5
+PyCt6>=6.0.6
+# Medical imaging
+SimpleITK>=2.3
+pydicom>=3.0
+# Numerics / plotting
+numpy>=1.24
+matplotlib>=3.7
+# Packaging
+pyinstaller>=6.0
