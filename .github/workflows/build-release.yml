@@ -1,0 +1,100 @@
+name: Build standalone apps (EXE + DMG)
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  windows-exe:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Build EXE
+        run: |
+          pyinstaller --noconfirm --onefile --noconsole --icon="logo.png" `
+            --add-data "logo.png;." `
+            --name "LungVolumeChange" `
+            --hidden-import PySide6.QtCore `
+            --hidden-import PySide6.QtWidgets `
+            --hidden-import PySide6.QtGui `
+            --hidden-import SimpleITK `
+            --hidden-import pydicom `
+            --hidden-import numpy `
+            --collect-submodules matplotlib `
+            --collect-submodules PyCt6 `
+            --collect-data PyCt6 `
+            --exclude-module torch `
+            --exclude-module torchvision `
+            app_pyct6.py
+      - name: Attach EXE to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0
+          name: Lung Volume Change Heatmap v1.0
+          files: dist/LungVolumeChange.exe
+
+  macos-dmg:
+    name: macOS DMG
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Install create-dmg
+        run: brew install create-dmg
+      - name: Build .app bundle
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --icon="logo.png" \
+            --add-data "logo.png:." \
+            --name "LungVolumeChange" \
+            --hidden-import PySide6.QtCore \
+            --hidden-import PySide6.QtWidgets \
+            --hidden-import PySide6.QtGui \
+            --hidden-import SimpleITK \
+            --hidden-import pydicom \
+            --hidden-import numpy \
+            --collect-submodules matplotlib \
+            --collect-submodules PyCt6 \
+            --collect-data PyCt6 \
+            --exclude-module torch \
+            --exclude-module torchvision \
+            --osx-bundle-identifier "com.lungvc.heatmap" \
+            app_pyct6.py
+      - name: Create DMG
+        run: |
+          mkdir -p dist/dmg
+          cp -R "dist/LungVolumeChange.app" dist/dmg/
+          ln -s /Applications dist/dmg/Applications
+          create-dmg \
+            --volname "Lung Volume Change" \
+            --volicon "logo.png" \
+            --window-pos 200 120 --window-size 600 400 --icon-size 100 \
+            --icon "LungVolumeChange.app" 200 190 \
+            --hide-extension "LungVolumeChange.app" \
+            --app-drop-link 400 185 \
+            "dist/LungVolumeChange.dmg" "dist/dmg/" || \
+          hdiutil create -volname "Lung Volume Change" \
+            -srcfolder dist/dmg -ov -format UDZO \
+            "dist/LungVolumeChange.dmg"
+          ls -lh dist/LungVolumeChange.dmg
+      - name: Attach DMG to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0
+          name: Lung Volume Change Heatmap v1.0
+          files: dist/LungVolumeChange.dmg
